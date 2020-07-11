@@ -1,4 +1,4 @@
-module dbutil
+module github.com/chengli1988/dbutil-mysql
 
 go 1.12
 
