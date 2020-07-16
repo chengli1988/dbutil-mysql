@@ -22,11 +22,11 @@ type BatchUpdateEngine struct {
 
 // NewUpdateEngine 创建InsertEngine
 func NewUpdateEngine(model Model) *UpdateEngine {
-	return NewUpateEngineDB(model, new(DB))
+	return NewUpdateEngineDB(model, new(DB))
 }
 
-// NewUpateEngineDB 创建UpdateEngine(事务)
-func NewUpateEngineDB(model Model, db *DB) *UpdateEngine {
+// NewUpdateEngineDB 创建UpdateEngine(事务)
+func NewUpdateEngineDB(model Model, db *DB) *UpdateEngine {
 
 	updateEngine := new(UpdateEngine)
 	updateEngine.db = db
