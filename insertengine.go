@@ -84,7 +84,8 @@ func (engine *BatchInsertEngine) InsertMany() error {
 
 	for _, dbField := range dbFields {
 
-		if modelReflect.checkFieldValid(modelReflect.dbFieldMap[dbField]) {
+		if modelReflect.isNotZeroValue(modelReflect.dbFieldMap[dbField]) {
+
 			insertDbFields = append(insertDbFields, dbField)
 			insertFieldsBuffer.WriteString(dbField)
 			insertFieldsBuffer.WriteString(", ")
@@ -140,7 +141,8 @@ func (insertEngine *InsertEngine) getInsertFieldsSql() (string, string, []interf
 	for _, dbField := range dbFields {
 
 		jsonField := insertEngine.dbFieldMap[dbField]
-		if insertEngine.checkFieldValid(jsonField) {
+		if insertEngine.isNotZeroValue(jsonField) {
+
 			insertFieldsBuffer.WriteString(dbField)
 			insertFieldsBuffer.WriteString(", ")
 

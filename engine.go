@@ -36,7 +36,7 @@ func InitCondition(model Model) Condition {
 // WhereEqs 等于条件
 func (condition *Condition) WhereEqs(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
@@ -53,7 +53,7 @@ func (condition *Condition) WhereEqs(jsonFields ...string) *Condition {
 func (condition *Condition) WhereNes(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
 
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
 			condition.conditionSql.WriteString(" <> ? ")
@@ -69,7 +69,7 @@ func (condition *Condition) WhereNes(jsonFields ...string) *Condition {
 func (condition *Condition) WhereLts(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
 
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
 			condition.conditionSql.WriteString(" < ? ")
@@ -84,7 +84,7 @@ func (condition *Condition) WhereLts(jsonFields ...string) *Condition {
 // WhereLes 小于等于条件
 func (condition *Condition) WhereLes(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
@@ -100,7 +100,7 @@ func (condition *Condition) WhereLes(jsonFields ...string) *Condition {
 // WhereGts 大于条件
 func (condition *Condition) WhereGts(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
@@ -116,8 +116,7 @@ func (condition *Condition) WhereGts(jsonFields ...string) *Condition {
 // WhereGes 大于等于条件
 func (condition *Condition) WhereGes(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
-
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
@@ -134,7 +133,7 @@ func (condition *Condition) WhereGes(jsonFields ...string) *Condition {
 func (condition *Condition) WhereIns(jsonFields ...string) *Condition {
 
 	for _, jsonField := range jsonFields {
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
@@ -160,7 +159,7 @@ func (condition *Condition) WhereIns(jsonFields ...string) *Condition {
 func (condition *Condition) WhereLikes(jsonField ...string) *Condition {
 	for _, jsonField := range jsonField {
 
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
 			condition.conditionSql.WriteString(" like ? ")
@@ -176,7 +175,7 @@ func (condition *Condition) WhereLikes(jsonField ...string) *Condition {
 func (condition *Condition) WhereLeftLikes(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
 
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
 			condition.conditionSql.WriteString(" like ? ")
@@ -192,13 +191,65 @@ func (condition *Condition) WhereLeftLikes(jsonFields ...string) *Condition {
 func (condition *Condition) WhereRightLikes(jsonFields ...string) *Condition {
 	for _, jsonField := range jsonFields {
 
-		if condition.checkFieldValid(jsonField) {
+		if condition.isNotZeroValue(jsonField) {
 			condition.conditionSql.WriteString(" and ")
 			condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
 			condition.conditionSql.WriteString(" like ? ")
 
 			condition.conditionValue = append(condition.conditionValue, fmt.Sprintf("%%%s", condition.getFieldValue(jsonField)))
 		}
+	}
+
+	return condition
+}
+
+// WhereEqZero 等于0
+func (condition *Condition) WhereEqZero(jsonFields ...string) *Condition {
+	for _, jsonField := range jsonFields {
+
+		condition.conditionSql.WriteString(" and ")
+		condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
+		condition.conditionSql.WriteString(" = ? ")
+
+		condition.conditionValue = append(condition.conditionValue, 0)
+	}
+
+	return condition
+}
+
+// WhereNeqZero 不等于0
+func (condition *Condition) WhereNeqZero(jsonFields ...string) *Condition {
+	for _, jsonField := range jsonFields {
+
+		condition.conditionSql.WriteString(" and ")
+		condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
+		condition.conditionSql.WriteString(" != ? ")
+
+		condition.conditionValue = append(condition.conditionValue, 0)
+	}
+
+	return condition
+}
+
+// WhereIsNull 是null值
+func (condition *Condition) WhereIsNull(jsonFields ...string) *Condition {
+	for _, jsonField := range jsonFields {
+
+		condition.conditionSql.WriteString(" and ")
+		condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
+		condition.conditionSql.WriteString(" is null ")
+	}
+
+	return condition
+}
+
+// WhereIsNotNull 是null值
+func (condition *Condition) WhereIsNotNull(jsonFields ...string) *Condition {
+	for _, jsonField := range jsonFields {
+
+		condition.conditionSql.WriteString(" and ")
+		condition.conditionSql.WriteString(condition.modelFieldMap[jsonField])
+		condition.conditionSql.WriteString(" is not null ")
 	}
 
 	return condition

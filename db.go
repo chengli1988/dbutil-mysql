@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	// mysql 驱动
 	_ "github.com/go-sql-driver/mysql"
@@ -25,7 +26,7 @@ func InitPool(username string, password string, ip string, port int, dbname stri
 		err            error
 	)
 
-	dataSourceName = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s", username, password, ip, port, dbname, charset)
+	dataSourceName = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=Local&charset=%s", username, password, ip, port, dbname, charset)
 
 	dbPool, err = sql.Open("mysql", dataSourceName)
 
@@ -174,7 +175,12 @@ func handleRows(rows *sql.Rows) ([]map[string]interface{}, error) {
 				switch col.(type) {
 				case []byte:
 					record[columns[i]] = string(col.([]byte))
-
+				case time.Time:
+					if col.(time.Time).IsZero() {
+						record[columns[i]] = nil
+					} else {
+						record[columns[i]] = col.(time.Time).Format(FormatLayout)
+					}
 				default:
 					record[columns[i]] = col.(int64)
 				}

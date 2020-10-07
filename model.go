@@ -1,6 +1,10 @@
 package dbutil
 
-import "reflect"
+import (
+	"database/sql/driver"
+	"reflect"
+	"time"
+)
 
 // Model 接口
 type Model interface {
@@ -8,11 +12,51 @@ type Model interface {
 	GetTableName() string
 }
 
+// LocalTime 自定义时间类型
+type LocalTime time.Time
+
+// FormatLayout 日期时间格式化格式
+const FormatLayout = "2006-01-02 15:04:05"
+
+// UnmarshalJSON unmarshal json方法
+func (localTime *LocalTime) UnmarshalJSON(data []byte) (err error) {
+	parsedTime, err := time.ParseInLocation(`"`+FormatLayout+`"`, string(data), time.Local)
+	*localTime = LocalTime(parsedTime)
+	return nil
+}
+
+// MarshalJSON marshal json方法
+func (localTime LocalTime) MarshalJSON() ([]byte, error) {
+	timeByte := make([]byte, 0, len(FormatLayout)+2)
+	timeByte = append(timeByte, '"')
+	timeByte = time.Time(localTime).AppendFormat(timeByte, FormatLayout)
+	timeByte = append(timeByte, '"')
+	return timeByte, nil
+}
+
+// Value 插入mysql使用
+func (localTime LocalTime) Value() (driver.Value, error) {
+	if time.Time(localTime).IsZero() {
+		return nil, nil
+	}
+
+	return []byte(time.Time(localTime).Format(FormatLayout)), nil
+}
+
+// String 字符串方法
+func (localTime LocalTime) String() string {
+	if time.Time(localTime).IsZero() {
+		return ""
+	}
+	return time.Time(localTime).Format(FormatLayout)
+}
+
 // ModelReflect 实体
 type ModelReflect struct {
 	tableName         string
 	dbFields          []string          // 数据库字段
 	dbFieldMap        map[string]string // db字段名Map-json字段名, key:db字段名, value: json字段名 (tag为dbField)
+	dbFieldTypeMap    map[string]string //
 	modelValue        reflect.Value     //
 	modelFieldMap     map[string]string //
 	modelFieldNameMap map[string]string //
@@ -27,6 +71,7 @@ func InitModelReflect(model Model) ModelReflect {
 	modelReflect.modelValue = reflect.ValueOf(model)
 	modelReflect.modelFieldMap = make(map[string]string)
 	modelReflect.modelFieldNameMap = make(map[string]string)
+	modelReflect.dbFieldTypeMap = make(map[string]string)
 
 	modelReflect.handleModelReflect(reflect.TypeOf(model))
 
@@ -45,6 +90,7 @@ func (modelReflect *ModelReflect) handleModelReflect(rt reflect.Type) {
 		if fieldTag.Get("db") != "" && fieldTag.Get("json") != "" {
 			modelReflect.modelFieldMap[fieldTag.Get("json")] = fieldTag.Get("db")
 			modelReflect.modelFieldNameMap[fieldTag.Get("json")] = rt.Field(i).Name
+			modelReflect.dbFieldTypeMap[fieldTag.Get("json")] = fieldTag.Get("dbType")
 
 			// 只有带有dbField且值且true的为数据库字段
 			if fieldTag.Get("dbField") == "true" {
@@ -55,23 +101,40 @@ func (modelReflect *ModelReflect) handleModelReflect(rt reflect.Type) {
 	}
 }
 
-// 根据json字段检查字段值是否不为空字符串("")、零(0)
-func (modelReflect *ModelReflect) checkFieldValid(jsonField string) bool {
+// 根据json字段检查字段是否为零值（true：是零值；false：不是零值）
+func (modelReflect *ModelReflect) isZeroValue(jsonField string) bool {
 	fieldValue := modelReflect.modelValue.FieldByName(modelReflect.modelFieldNameMap[jsonField])
-
-	if !fieldValue.IsValid() || modelReflect.getFieldValue(jsonField) == "" || modelReflect.getFieldValue(jsonField) == 0 {
-		return false
+	if fieldValue.IsZero() {
+		return true
 	}
+	return false
+}
 
-	return true
+// isNotZeroValue 根据json字段检查字段值是否不为零值（true：不是零值；false：是零值）
+func (modelReflect *ModelReflect) isNotZeroValue(jsonField string) bool {
+	return !modelReflect.isZeroValue(jsonField)
 }
 
 // 根据json字段获取字段值，返回接口类型
 func (modelReflect *ModelReflect) getFieldValue(jsonField string) interface{} {
-	return modelReflect.modelValue.FieldByName(modelReflect.modelFieldNameMap[jsonField]).Interface()
+	dbType := modelReflect.dbFieldTypeMap[jsonField]
+
+	value := modelReflect.modelValue.FieldByName(modelReflect.modelFieldNameMap[jsonField])
+	switch dbType {
+	case "datetime":
+		if value.IsZero() {
+			return nil
+		}
+		return value.Interface()
+	default:
+		return value.Interface()
+	}
 }
 
 // 根据json字段获取字段值, 返回string类型
 func (modelReflect *ModelReflect) getFieldStringValue(jsonField string) string {
+	if modelReflect.isZeroValue(jsonField) {
+		return ""
+	}
 	return modelReflect.modelValue.FieldByName(modelReflect.modelFieldNameMap[jsonField]).String()
 }

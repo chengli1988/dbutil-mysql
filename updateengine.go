@@ -115,8 +115,9 @@ func (engine *BatchUpdateEngine) ReplaceIntoMany() error {
 	var replaceFieldsBuffer bytes.Buffer
 	dbFields := engine.modelReflects[0].dbFields
 	modelReflect := engine.modelReflects[0]
+
 	for _, dbField := range dbFields {
-		if modelReflect.checkFieldValid(modelReflect.dbFieldMap[dbField]) {
+		if modelReflect.isNotZeroValue(modelReflect.dbFieldMap[dbField]) {
 			replaceDbFields = append(replaceDbFields, dbField)
 			replaceFieldsBuffer.WriteString(dbField)
 			replaceFieldsBuffer.WriteString(", ")

@@ -191,10 +191,10 @@ func (selectEngine *SelectEngine) getOrderSql() string {
 
 	if len(selectEngine.orderBys) > 0 {
 		orderSqlBuffer.WriteString(" order by ")
-		for key, value := range selectEngine.orderBys {
+		for _, key := range selectEngine.orderKeys {
 			orderSqlBuffer.WriteString(key)
 			orderSqlBuffer.WriteString(" ")
-			orderSqlBuffer.WriteString(value)
+			orderSqlBuffer.WriteString(selectEngine.orderBys[key])
 			orderSqlBuffer.WriteString(", ")
 		}
 
