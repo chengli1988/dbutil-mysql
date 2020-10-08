@@ -154,7 +154,12 @@ func TestInsertEngine_InsertMany(t *testing.T) {
 	user2.CreateId = "1"
 	user2.CreateTime = "2020-07-09 23:38:38"
 
-	err := NewBatchInsertEngine(user1, user2).InsertMany()
+	users := make([]Model, 0)
+
+	users = append(users, user1)
+	users = append(users, user2)
+
+	err := NewBatchInsertEngine(users).InsertMany()
 
 	t.Log(err)
 }
@@ -179,7 +184,12 @@ func TestUpdateEngine_ReplaceIntoMany(t *testing.T) {
 	user2.CreateId = "1"
 	user2.CreateTime = "2020-07-09 23:38:38"
 
-	err := NewBatchUpdateEngine(user1, user2).ReplaceIntoMany()
+	users := make([]Model, 0)
+
+	users = append(users, user1)
+	users = append(users, user2)
+
+	err := NewBatchUpdateEngine(users).ReplaceIntoMany()
 
 	t.Log(err)
 }

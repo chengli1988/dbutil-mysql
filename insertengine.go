@@ -35,7 +35,7 @@ func NewInsertEngineDB(model Model, db *DB) *InsertEngine {
 }
 
 // NewBatchInsertEngine 创建批量新增代理
-func NewBatchInsertEngine(models ...Model) *BatchInsertEngine {
+func NewBatchInsertEngine(models []Model) *BatchInsertEngine {
 	return NewBatchInsertEngineDB(models, new(DB))
 }
 

@@ -36,7 +36,7 @@ func NewUpdateEngineDB(model Model, db *DB) *UpdateEngine {
 }
 
 // NewBatchUpdateEngine 创建BatchUpdateEngine
-func NewBatchUpdateEngine(models ...Model) *BatchUpdateEngine {
+func NewBatchUpdateEngine(models []Model) *BatchUpdateEngine {
 	return NewBatchUpdateEngineDB(models, new(DB))
 }
 
